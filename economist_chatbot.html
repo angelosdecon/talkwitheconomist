@@ -678,8 +678,7 @@ textarea::placeholder { color: var(--dim); }
 <script>
 // ── API CONFIG ─────────────────────────────────────────────
 // Key is split to avoid GitHub secret scanning
-const _k = [AQ.Ab8RN6Jc4Gqfz3TKXX, MiwPa7sBEld17uSYf4tDEKJeHxaUhjBA
-];
+const _k = [AQ.Ab8RN6Jc4Gqfz3TKXX, MiwPa7sBEld17uSYf4tDEKJeHxaUhjBA];
 let GEMINI_API_KEY = '';
 
 function getGeminiURL() {
@@ -689,20 +688,16 @@ function getGeminiURL() {
 // ── PASSWORD PROTECTION ────────────────────────────────────
 const ACCESS_PASSWORD = 'SOAS2026';
 
-function checkPassword() {
-  const pw = prompt('Enter the access password to continue:');
-  if(pw === null) {
-    checkPassword();
-  } else if(pw.trim() === ACCESS_PASSWORD) {
+function submitPassword() {
+  const pw = document.getElementById('password-input').value.trim();
+  if(pw === ACCESS_PASSWORD) {
     GEMINI_API_KEY = _k.join('');
     document.getElementById('api-modal').style.display = 'none';
   } else {
-    alert('Incorrect password. Please try again.');
-    checkPassword();
+    document.getElementById('modal-error').style.display = 'block';
+    document.getElementById('password-input').value = '';
   }
 }
-
-function submitPassword() { checkPassword(); }
 
 // ── ECONOMIST DEFINITIONS ──────────────────────────────────
 const ECONOMISTS = {
@@ -1041,7 +1036,9 @@ function clearChat() {
 // ── INIT ───────────────────────────────────────────────────
 renderStarters('keynes');
 applyTheme('keynes');
-window.addEventListener('load', () => { checkPassword(); });
+window.addEventListener('load', () => {
+  document.getElementById('password-input').focus();
+});
 </script>
 </body>
 </html>
