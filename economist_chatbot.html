@@ -588,9 +588,9 @@ textarea::placeholder { color: var(--dim); }
     </div>
     <input class="modal-input" type="password" id="password-input"
       placeholder="Enter password..."
-      onkeydown="if(event.key==='Enter') submitPassword()">
+      onkeydown="if(event.key==='Enter'){event.preventDefault(); submitPassword();}">
     <div class="modal-error" id="modal-error">Incorrect password — please try again</div>
-    <button class="modal-btn" onclick="submitPassword()">Enter →</button>
+    <button class="modal-btn" type="button" onclick="submitPassword()">Enter →</button>
     <div class="modal-note">SOAS Department of Economics · 2026</div>
   </div>
 </div>
@@ -690,12 +690,15 @@ const ACCESS_PASSWORD = 'SOAS2026';
 
 function submitPassword() {
   const input = document.getElementById('password-input');
+  const errorEl = document.getElementById('modal-error');
   const pw = input.value.trim();
+  if(!pw) return;
   if(pw === ACCESS_PASSWORD) {
     GEMINI_API_KEY = _k.join('');
     document.getElementById('api-modal').style.display = 'none';
+    document.getElementById('user-input').focus();
   } else {
-    document.getElementById('modal-error').style.display = 'block';
+    errorEl.style.display = 'block';
     input.value = '';
     input.focus();
   }
