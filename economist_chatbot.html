@@ -468,103 +468,7 @@ textarea::placeholder { color: var(--dim); }
   margin-top: 4px;
 }
 
-/* ── API KEY MODAL ───────────────────────────────────────── */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(28,26,22,0.7);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal-box {
-  background: var(--white);
-  border: 1px solid var(--rule);
-  border-radius: 4px;
-  padding: 36px 40px;
-  max-width: 460px;
-  width: 90%;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-}
-
-.modal-kicker {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--dim);
-  margin-bottom: 10px;
-}
-
-.modal-title {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--ink);
-  margin-bottom: 10px;
-}
-
-.modal-desc {
-  font-size: 0.85rem;
-  color: var(--dim);
-  line-height: 1.6;
-  margin-bottom: 20px;
-}
-
-.modal-desc a {
-  color: var(--keynes-a);
-  text-decoration: none;
-}
-
-.modal-input {
-  width: 100%;
-  border: 1.5px solid var(--rule);
-  border-radius: 6px;
-  padding: 10px 14px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.82rem;
-  color: var(--ink);
-  outline: none;
-  margin-bottom: 12px;
-  transition: border-color 0.15s;
-}
-
-.modal-input:focus { border-color: var(--keynes-a); }
-
-.modal-error {
-  font-size: 0.8rem;
-  color: var(--marx-a);
-  margin-bottom: 10px;
-  display: none;
-}
-
-.modal-btn {
-  width: 100%;
-  padding: 11px;
-  background: var(--ink);
-  color: var(--white);
-  border: none;
-  border-radius: 6px;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.92rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.modal-btn:hover { background: #2e6da4; }
-
-.modal-note {
-  font-size: 0.75rem;
-  color: var(--dim);
-  text-align: center;
-  margin-top: 12px;
-  line-height: 1.5;
-}
-
+/* ── RESPONSIVE ──────────────────────────────────────────── */
 @media (max-width: 700px) {
   .masthead { padding: 14px 20px; }
   .masthead-title { font-size: 1.3rem; }
@@ -665,7 +569,7 @@ const _k = ['AQ.Ab8RN6Jc4Gqfz3TKXX', 'MiwPa7sBEld17uSYf4tDEKJeHxaUhjBA'];
 let GEMINI_API_KEY = '';
 
 function getGeminiURL() {
-  return `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+  return `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
 }
 
 // ── PASSWORD PROTECTION ────────────────────────────────────
@@ -677,6 +581,7 @@ function checkPassword() {
     checkPassword();
   } else if(pw.trim() === ACCESS_PASSWORD) {
     GEMINI_API_KEY = _k.join('');
+    console.log('API key set, length:', GEMINI_API_KEY.length);
   } else {
     alert('Incorrect password. Please try again.');
     checkPassword();
@@ -840,8 +745,10 @@ function selectEconomist(econ, btn) {
 
   const e = ECONOMISTS[econ];
   document.getElementById('context-label').textContent = `Speaking with ${e.name}`;
-  document.getElementById('opening-quote').textContent = e.quote;
-  document.getElementById('opening-attr').textContent = e.quoteAttr;
+  const oq = document.getElementById('opening-quote');
+  const oa = document.getElementById('opening-attr');
+  if(oq) oq.textContent = e.quote;
+  if(oa) oa.textContent = e.quoteAttr;
 
   const msgs = document.getElementById('messages');
   msgs.innerHTML = `
@@ -896,17 +803,29 @@ async function sendMessage() {
 
   try {
     const e = ECONOMISTS[currentEcon];
+    const contents = [
+      { role: 'user', parts: [{ text: e.system + '\n\nStudent: ' + text }] },
+      ...conversationHistory.slice(0, -1).map((m, i) => ({
+        role: m.role === 'user' ? 'user' : 'model',
+        parts: m.parts
+      }))
+    ];
+    if(conversationHistory.length > 1) {
+      contents.push({ role: 'user', parts: [{ text }] });
+    }
     const response = await fetch(getGeminiURL(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        system_instruction: { parts: [{ text: e.system }] },
-        contents: conversationHistory,
+        contents: conversationHistory.length === 1
+          ? [{ role: 'user', parts: [{ text: e.system + '\n\nNow, the student asks: ' + text }] }]
+          : conversationHistory,
         generationConfig: { temperature: 0.85, maxOutputTokens: 400 }
       })
     });
 
     const data = await response.json();
+    console.log('API response:', JSON.stringify(data).substring(0, 200));
     typingEl.remove();
 
     if(data.candidates && data.candidates[0]) {
@@ -918,6 +837,7 @@ async function sendMessage() {
     }
   } catch(err) {
     typingEl.remove();
+    console.error('API Error:', err);
     appendMessage('econ', 'There was a connection error. Please check your API key and try again.', ECONOMISTS[currentEcon].short);
   }
 
