@@ -565,11 +565,11 @@ textarea::placeholder { color: var(--dim); }
 <script>
 // ── API CONFIG ─────────────────────────────────────────────
 // Key is split to avoid GitHub secret scanning
-const _k = ['AQ.Ab8RN6Jc4Gqfz3TKXX', 'MiwPa7sBEld17uSYf4tDEKJeHxaUhjBA'];
+const _k = ['AIzaSy', 'YOUR_KEY_SECOND_PART_HERE'];
 let GEMINI_API_KEY = '';
 
 function getGeminiURL() {
-  return `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
+  return `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 }
 
 // ── PASSWORD PROTECTION ────────────────────────────────────
@@ -803,23 +803,12 @@ async function sendMessage() {
 
   try {
     const e = ECONOMISTS[currentEcon];
-    const contents = [
-      { role: 'user', parts: [{ text: e.system + '\n\nStudent: ' + text }] },
-      ...conversationHistory.slice(0, -1).map((m, i) => ({
-        role: m.role === 'user' ? 'user' : 'model',
-        parts: m.parts
-      }))
-    ];
-    if(conversationHistory.length > 1) {
-      contents.push({ role: 'user', parts: [{ text }] });
-    }
     const response = await fetch(getGeminiURL(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: conversationHistory.length === 1
-          ? [{ role: 'user', parts: [{ text: e.system + '\n\nNow, the student asks: ' + text }] }]
-          : conversationHistory,
+        contents: conversationHistory,
+        system_instruction: { parts: [{ text: e.system }] },
         generationConfig: { temperature: 0.85, maxOutputTokens: 400 }
       })
     });
