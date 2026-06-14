@@ -578,23 +578,6 @@ textarea::placeholder { color: var(--dim); }
 </head>
 <body>
 
-<!-- PASSWORD MODAL -->
-<div class="modal-overlay" id="api-modal">
-  <div class="modal-box">
-    <div class="modal-kicker">SOAS Economics · Teaching Tool</div>
-    <div class="modal-title">Dialogues in Economics</div>
-    <div class="modal-desc">
-      Enter the access password provided by your lecturer to begin speaking with Keynes, Friedman, or Marx.
-    </div>
-    <input class="modal-input" type="password" id="password-input"
-      placeholder="Enter password..."
-      onkeydown="if(event.key==='Enter'){event.preventDefault(); submitPassword();}">
-    <div class="modal-error" id="modal-error">Incorrect password — please try again</div>
-    <button class="modal-btn" type="button" onclick="submitPassword()">Enter →</button>
-    <div class="modal-note">SOAS Department of Economics · 2026</div>
-  </div>
-</div>
-
 <!-- MASTHEAD -->
 <header class="masthead">
   <div class="masthead-left">
@@ -688,16 +671,19 @@ function getGeminiURL() {
 // ── PASSWORD PROTECTION ────────────────────────────────────
 const ACCESS_PASSWORD = 'SOAS2026';
 
-function submitPassword() {
-  const pw = document.getElementById('password-input').value.trim();
-  if(pw === ACCESS_PASSWORD) {
+function checkPassword() {
+  const pw = prompt('Dialogues in Economics\n\nEnter the access password:');
+  if(pw === null) {
+    checkPassword();
+  } else if(pw.trim() === ACCESS_PASSWORD) {
     GEMINI_API_KEY = _k.join('');
-    document.getElementById('api-modal').style.display = 'none';
   } else {
-    document.getElementById('modal-error').style.display = 'block';
-    document.getElementById('password-input').value = '';
+    alert('Incorrect password. Please try again.');
+    checkPassword();
   }
 }
+
+function submitPassword() { checkPassword(); }
 
 // ── ECONOMIST DEFINITIONS ──────────────────────────────────
 const ECONOMISTS = {
@@ -1036,9 +1022,7 @@ function clearChat() {
 // ── INIT ───────────────────────────────────────────────────
 renderStarters('keynes');
 applyTheme('keynes');
-window.addEventListener('load', () => {
-  document.getElementById('password-input').focus();
-});
+window.addEventListener('load', () => { checkPassword(); });
 </script>
 </body>
 </html>
