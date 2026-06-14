@@ -678,7 +678,8 @@ textarea::placeholder { color: var(--dim); }
 <script>
 // ── API CONFIG ─────────────────────────────────────────────
 // Key is split to avoid GitHub secret scanning
-const _k = [AQ.Ab8RN6Jc4Gqfz3TKXX, MiwPa7sBEld17uSYf4tDEKJeHxaUhjBA];
+const _k = [AQ.Ab8RN6Jc4Gqfz3TKXX, MiwPa7sBEld17uSYf4tDEKJeHxaUhjBA
+];
 let GEMINI_API_KEY = '';
 
 function getGeminiURL() {
@@ -688,21 +689,20 @@ function getGeminiURL() {
 // ── PASSWORD PROTECTION ────────────────────────────────────
 const ACCESS_PASSWORD = 'SOAS2026';
 
-function submitPassword() {
-  const input = document.getElementById('password-input');
-  const errorEl = document.getElementById('modal-error');
-  const pw = input.value.trim();
-  if(!pw) return;
-  if(pw === ACCESS_PASSWORD) {
+function checkPassword() {
+  const pw = prompt('Enter the access password to continue:');
+  if(pw === null) {
+    checkPassword();
+  } else if(pw.trim() === ACCESS_PASSWORD) {
     GEMINI_API_KEY = _k.join('');
     document.getElementById('api-modal').style.display = 'none';
-    document.getElementById('user-input').focus();
   } else {
-    errorEl.style.display = 'block';
-    input.value = '';
-    input.focus();
+    alert('Incorrect password. Please try again.');
+    checkPassword();
   }
 }
+
+function submitPassword() { checkPassword(); }
 
 // ── ECONOMIST DEFINITIONS ──────────────────────────────────
 const ECONOMISTS = {
@@ -1041,6 +1041,7 @@ function clearChat() {
 // ── INIT ───────────────────────────────────────────────────
 renderStarters('keynes');
 applyTheme('keynes');
+window.addEventListener('load', () => { checkPassword(); });
 </script>
 </body>
 </html>
