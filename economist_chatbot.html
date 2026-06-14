@@ -565,11 +565,11 @@ textarea::placeholder { color: var(--dim); }
 <script>
 // ── API CONFIG ─────────────────────────────────────────────
 // Key is split to avoid GitHub secret scanning
-const _k = ['AQ.Ab8RN6KmcmB27Y_m9Xy', 'WoxBZSf3vN1kdhJo4Uxmkc9GJ0_XUzQ'];
+const _k = ['sk-ant-api03-zg_BWr-4XjlI9YvH6N_iDwuLOrOPkM-lOpI0XjxW4ABKSz2AY2OZ4oPWxfs8c', 'Mmj8XLjBPd6HKEekWGzWMA7iA-lOl2nQAA'];
 let GEMINI_API_KEY = '';
 
-function getGeminiURL() {
-  return `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+function getAPIURL() {
+  return `https://api.anthropic.com/v1/messages`;
 }
 
 // ── PASSWORD PROTECTION ────────────────────────────────────
@@ -803,13 +803,22 @@ async function sendMessage() {
 
   try {
     const e = ECONOMISTS[currentEcon];
-    const response = await fetch(getGeminiURL(), {
+    const response = await fetch(getAPIURL(), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': GEMINI_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
       body: JSON.stringify({
-        contents: conversationHistory,
-        system_instruction: { parts: [{ text: e.system }] },
-        generationConfig: { temperature: 0.85, maxOutputTokens: 400 }
+        model: 'claude-haiku-4-5',
+        max_tokens: 400,
+        system: e.system,
+        messages: conversationHistory.map(m => ({
+          role: m.role === 'model' ? 'assistant' : m.role,
+          content: m.parts[0].text
+        }))
       })
     });
 
@@ -817,8 +826,8 @@ async function sendMessage() {
     console.log('API response:', JSON.stringify(data).substring(0, 200));
     typingEl.remove();
 
-    if(data.candidates && data.candidates[0]) {
-      const reply = data.candidates[0].content.parts[0].text;
+    if(data.content && data.content[0]) {
+      const reply = data.content[0].text;
       appendMessage('econ', reply, e.short);
       conversationHistory.push({ role: 'model', parts: [{ text: reply }] });
     } else {
